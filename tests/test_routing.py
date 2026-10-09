@@ -119,3 +119,9 @@ def test_missing_attempts_counts_as_zero() -> None:
 
 def test_retryable_set() -> None:
     assert frozenset({"execution_error", "guard_rejected", "no_sql"}) == RETRYABLE_ERRORS
+
+
+def test_documented_question_limit_is_2000_characters() -> None:
+    assert MAX_QUESTION_CHARS == 2000
+    assert classify_intent("q" * 2000) == "sql"
+    assert classify_intent("q" * 2001) == "invalid"

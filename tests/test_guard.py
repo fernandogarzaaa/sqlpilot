@@ -369,3 +369,12 @@ def test_dialect_is_passed_to_the_parser() -> None:
 
 def test_check_sql_without_allow_list_permits_any_table() -> None:
     assert check_sql("SELECT * FROM anything_at_all").ok
+
+
+def test_default_length_limit_is_20000_characters() -> None:
+    assert GuardConfig().max_chars == 20_000
+    sql = "SELECT 1"
+    at_limit = sql + " " * 0 + "+0" * ((20_000 - len(sql)) // 2)
+    assert len(at_limit) == 20_000
+    assert SQLGuard().check(at_limit).reason != "too_long"
+    assert SQLGuard().check(at_limit + "1").reason == "too_long"

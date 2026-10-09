@@ -1,0 +1,488 @@
+{
+  "tool": "testteeth",
+  "version": "0.2.0",
+  "note": "Combined from four per-module runs (one per file, same test_args as [tool.testteeth]); score = (killed + timeouts) / total, as testteeth computes it.",
+  "score": 99.6,
+  "total": 284,
+  "killed": 277,
+  "timeouts": 6,
+  "survived": 0,
+  "no_coverage": 1,
+  "per_module": {
+    "guard": {
+      "score": 100.0,
+      "total": 50,
+      "killed": 50,
+      "timeouts": 0,
+      "survived": 0,
+      "no_coverage": 0
+    },
+    "retrieval": {
+      "score": 100.0,
+      "total": 139,
+      "killed": 139,
+      "timeouts": 0,
+      "survived": 0,
+      "no_coverage": 0
+    },
+    "routing": {
+      "score": 100.0,
+      "total": 27,
+      "killed": 27,
+      "timeouts": 0,
+      "survived": 0,
+      "no_coverage": 0
+    },
+    "auth": {
+      "score": 98.5,
+      "total": 68,
+      "killed": 61,
+      "timeouts": 6,
+      "survived": 0,
+      "no_coverage": 1
+    }
+  },
+  "functions": [
+    {
+      "file": "src/sqlpilot/guard.py",
+      "function": "<module>",
+      "line": 0,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/guard.py",
+      "function": "GuardResult.__bool__",
+      "line": 146,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/guard.py",
+      "function": "GuardRejected.__init__",
+      "line": 153,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/guard.py",
+      "function": "_reject",
+      "line": 158,
+      "score": 100.0,
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/guard.py",
+      "function": "_function_name",
+      "line": 162,
+      "score": 100.0,
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/guard.py",
+      "function": "_cte_names",
+      "line": 168,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/guard.py",
+      "function": "_referenced_tables",
+      "line": 172,
+      "score": 100.0,
+      "total": 6,
+      "killed": 6,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/guard.py",
+      "function": "SQLGuard.__init__",
+      "line": 186,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/guard.py",
+      "function": "SQLGuard.check",
+      "line": 189,
+      "score": 100.0,
+      "total": 33,
+      "killed": 33,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/guard.py",
+      "function": "check_sql",
+      "line": 241,
+      "score": 100.0,
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "_stem",
+      "line": 94,
+      "score": 100.0,
+      "total": 18,
+      "killed": 18,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "tokenize",
+      "line": 104,
+      "score": 100.0,
+      "total": 3,
+      "killed": 3,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "BM25.__init__",
+      "line": 118,
+      "score": 100.0,
+      "total": 13,
+      "killed": 13,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "BM25.scores",
+      "line": 130,
+      "score": 100.0,
+      "total": 17,
+      "killed": 17,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "_cosine",
+      "line": 147,
+      "score": 100.0,
+      "total": 8,
+      "killed": 8,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "RetrievalResult.table_names",
+      "line": 161,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "RetrievalResult.ddl",
+      "line": 164,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "_table_document",
+      "line": 168,
+      "score": 100.0,
+      "total": 6,
+      "killed": 6,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "_references",
+      "line": 177,
+      "score": 100.0,
+      "total": 2,
+      "killed": 2,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "SchemaRetriever.__init__",
+      "line": 189,
+      "score": 100.0,
+      "total": 20,
+      "killed": 20,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "SchemaRetriever._dense_scores",
+      "line": 216,
+      "score": 100.0,
+      "total": 6,
+      "killed": 6,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "SchemaRetriever.score",
+      "line": 224,
+      "score": 100.0,
+      "total": 22,
+      "killed": 22,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "SchemaRetriever._prune_columns",
+      "line": 251,
+      "score": 100.0,
+      "total": 10,
+      "killed": 10,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/retrieval.py",
+      "function": "SchemaRetriever.retrieve",
+      "line": 261,
+      "score": 100.0,
+      "total": 12,
+      "killed": 12,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/routing.py",
+      "function": "<module>",
+      "line": 0,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/routing.py",
+      "function": "classify_intent",
+      "line": 47,
+      "score": 100.0,
+      "total": 10,
+      "killed": 10,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/routing.py",
+      "function": "route_after_plan",
+      "line": 63,
+      "score": 100.0,
+      "total": 5,
+      "killed": 5,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/routing.py",
+      "function": "route_after_execute",
+      "line": 73,
+      "score": 100.0,
+      "total": 11,
+      "killed": 11,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "<module>",
+      "line": 0,
+      "score": 80.0,
+      "total": 5,
+      "killed": 4,
+      "survived": 1,
+      "surviving_mutants": [
+        "src/sqlpilot/auth.py#1"
+      ],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "hash_key",
+      "line": 57,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "Tenant.public",
+      "line": 72,
+      "score": 100.0,
+      "total": 3,
+      "killed": 3,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "extract_api_key",
+      "line": 83,
+      "score": 100.0,
+      "total": 5,
+      "killed": 5,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "TenantRegistry.__post_init__",
+      "line": 98,
+      "score": 100.0,
+      "total": 4,
+      "killed": 4,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "TenantRegistry.from_tenants",
+      "line": 107,
+      "score": 100.0,
+      "total": 3,
+      "killed": 3,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "TenantRegistry.authenticate",
+      "line": 115,
+      "score": 100.0,
+      "total": 4,
+      "killed": 4,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "TenantRegistry.get",
+      "line": 126,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "TenantRegistry.__len__",
+      "line": 129,
+      "score": 100.0,
+      "total": 1,
+      "killed": 1,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "_tenant_from_mapping",
+      "line": 133,
+      "score": 100.0,
+      "total": 31,
+      "killed": 31,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": [
+        {
+          "file": "src/sqlpilot/auth.py",
+          "function": "_tenant_from_mapping",
+          "function_line": 133,
+          "kind": "timeout",
+          "line": 133,
+          "detail": "uses a timeout but no test simulates the timeout expiring",
+          "lang": "python"
+        }
+      ]
+    },
+    {
+      "file": "src/sqlpilot/auth.py",
+      "function": "load_tenants",
+      "line": 173,
+      "score": 100.0,
+      "total": 10,
+      "killed": 10,
+      "survived": 0,
+      "surviving_mutants": [],
+      "failure_path_gaps": []
+    }
+  ]
+}

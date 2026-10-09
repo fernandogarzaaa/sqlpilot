@@ -229,10 +229,12 @@ class SchemaRetriever:
         "invoices" prefers ``Invoice`` over ``InvoiceLine``). With an embedder, the lexical score
         is mixed with cosine similarity: ``(1 - alpha) * lexical + alpha * cosine``.
         """
+        if not self.tables:
+            return {}
         q_tokens = tokenize(question)
         q_set = set(q_tokens)
         raw = self._bm25.scores(q_tokens)
-        top = max(raw, default=0.0)
+        top = max(raw)
         sparse = []
         for value, name_tokens in zip(raw, self._name_tokens):
             bm25 = value / top if top > 0 else 0.0
@@ -242,7 +244,8 @@ class SchemaRetriever:
         if dense is None:
             combined = sparse
         else:
-            combined = [(1 - self.alpha) * s + self.alpha * d for s, d in zip(sparse, dense)]
+            # cosine can be negative; clamp so every score stays in [0, 1]
+            combined = [max(0.0, (1 - self.alpha) * s + self.alpha * d) for s, d in zip(sparse, dense)]
         return {t.name: c for t, c in zip(self.tables, combined)}
 
     def _prune_columns(self, table: TableInfo, question_tokens: set[str]) -> TableInfo:
@@ -256,13 +259,12 @@ class SchemaRetriever:
         return TableInfo(name=table.name, columns=ordered, row_count=table.row_count)
 
     def retrieve(self, question: str) -> RetrievalResult:
+        if not self.tables:
+            return RetrievalResult(tables=[])
         scores = self.score(question)
         ranked = sorted(self.tables, key=lambda t: -scores[t.name])
-        best = scores[ranked[0].name] if ranked else 0.0
-        if best <= 0:
-            chosen = ranked[: self.k]
-        else:
-            chosen = [t for t in ranked[: self.k] if scores[t.name] >= best * self.min_relative_score]
+        best = scores[ranked[0].name]
+        chosen = [t for t in ranked[: self.k] if scores[t.name] >= best * self.min_relative_score]
         chosen_names = {t.name.lower() for t in chosen}
         bridges: list[str] = []
         for table in ranked:

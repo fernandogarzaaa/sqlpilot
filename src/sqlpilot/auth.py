@@ -24,15 +24,14 @@ import hashlib
 import hmac
 import os
 import re
-import sys
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-if sys.version_info >= (3, 11):
-    import tomllib
-else:  # pragma: no cover
+try:
+    import tomllib  # type: ignore[import-not-found,unused-ignore]  # stdlib on 3.11+; mypy targets 3.10
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10
     import tomli as tomllib
 
 __all__ = [

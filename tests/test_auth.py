@@ -224,3 +224,14 @@ def test_load_tenants_defaults_to_process_env(tmp_path: Path, monkeypatch: pytes
     path = tmp_path / "t.toml"
     path.write_text(GOOD)
     assert load_tenants(path).authenticate(KEY_B) is not None
+
+
+def test_documented_key_length_limits() -> None:
+    assert (MIN_KEY_LENGTH, MAX_KEY_LENGTH) == (8, 256)
+    reg = TenantRegistry.from_tenants([tenant("t", "k" * 256)])
+    assert reg.authenticate("k" * 256) is not None
+    assert reg.authenticate("k" * 257) is None
+    data = {"tenants": [{"id": "a", "database": "a.db", "api_key_env": "X"}]}
+    with pytest.raises(TenantConfigError):
+        load_tenants(data, env={"X": "k" * 7})
+    assert load_tenants(data, env={"X": "k" * 8}).authenticate("k" * 8) is not None

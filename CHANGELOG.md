@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- Schema retrieval: hybrid (BM25 + embeddings) scores are clamped to [0, 1] when cosine
+  similarity is negative; empty-schema handling is simplified to one early return.
+- MCP server passes its version to FastMCP on mcp 2.x and falls back cleanly on mcp 1.x.
+- `auth.py` imports `tomllib` with a fallback to `tomli` that type-checks under mypy --strict.
+
+### Added
+- End-to-end MCP stdio test and stronger tests for the guard, retrieval, routing and auth
+  modules (mutation scores in `docs/mutation/`).
+- Spider dev benchmark results for Qwen2.5-0.5B-Instruct (Q4_K_M) in `bench/results/`.
+- Full README: quickstart, benchmark, mutation scores, architecture, security model, limitations.
+
 ## [0.1.0] - 2026-10-09
 
 ### Added

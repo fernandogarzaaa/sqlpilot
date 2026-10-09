@@ -8,7 +8,7 @@ dist/
 build/
 *.egg-info/
 .sqlpilot/
-.bench_data/
+.bench_data
 .logs/
 .coverage
 htmlcov/
@@ -17,3 +17,4 @@ mutation*.json
 bench/results/latest/
 *.db
 !src/sqlpilot/data/*.sqlite
+.venv310/

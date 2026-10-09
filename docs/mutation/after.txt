@@ -1,0 +1,104 @@
+testteeth 0.2.0 mutation run AFTER test strengthening (guard, retrieval, routing, auth).
+Run as four per-module invocations (`testteeth run --workers 2 src/sqlpilot/<module>.py`) with the
+[tool.testteeth] test_args; reports concatenated below. Score = (killed + timeouts) / mutants.
+
+TOTAL: 283/284 = 99.6%  (killed 277, timeouts 6, survived 0, not covered 1)
+
+====================================================================================================
+== src/sqlpilot/guard.py
+====================================================================================================
+.................................................. 50 mutants
+testteeth: mutation grade for all selected code
+
+src/sqlpilot/guard.py
+  <module>                           100.0%    1/1   killed  ok
+  GuardResult.__bool__               100.0%    1/1   killed  ok
+  GuardRejected.__init__             100.0%    1/1   killed  ok
+  _reject                            100.0%    2/2   killed  ok
+  _function_name                     100.0%    2/2   killed  ok
+  _cte_names                         100.0%    1/1   killed  ok
+  _referenced_tables                 100.0%    6/6   killed  ok
+  SQLGuard.__init__                  100.0%    1/1   killed  ok
+  SQLGuard.check                     100.0%   33/33  killed  ok
+  check_sql                          100.0%    2/2   killed  ok
+
+Mutants: 50  killed: 50  survived: 0  not covered: 0  timeouts: 0
+Failure-path gaps: 0
+Mutation score: 100.0%
+Time: baseline 15.0s, total 329.1s
+EXIT 0
+
+====================================================================================================
+== src/sqlpilot/retrieval.py
+====================================================================================================
+........................................................................................................................................... 139 mutants
+testteeth: mutation grade for all selected code
+
+src/sqlpilot/retrieval.py
+  _stem                              100.0%   18/18  killed  ok
+  tokenize                           100.0%    3/3   killed  ok
+  BM25.__init__                      100.0%   13/13  killed  ok
+  BM25.scores                        100.0%   17/17  killed  ok
+  _cosine                            100.0%    8/8   killed  ok
+  RetrievalResult.table_names        100.0%    1/1   killed  ok
+  RetrievalResult.ddl                100.0%    1/1   killed  ok
+  _table_document                    100.0%    6/6   killed  ok
+  _references                        100.0%    2/2   killed  ok
+  SchemaRetriever.__init__           100.0%   20/20  killed  ok
+  SchemaRetriever._dense_scores      100.0%    6/6   killed  ok
+  SchemaRetriever.score              100.0%   22/22  killed  ok
+  SchemaRetriever._prune_columns     100.0%   10/10  killed  ok
+  SchemaRetriever.retrieve           100.0%   12/12  killed  ok
+
+Mutants: 139  killed: 139  survived: 0  not covered: 0  timeouts: 0
+Failure-path gaps: 0
+Mutation score: 100.0%
+Time: baseline 31.3s, total 1865.4s
+EXIT 0
+
+====================================================================================================
+== src/sqlpilot/routing.py
+====================================================================================================
+........................... 27 mutants
+testteeth: mutation grade for all selected code
+
+src/sqlpilot/routing.py
+  <module>                           100.0%    1/1   killed  ok
+  classify_intent                    100.0%   10/10  killed  ok
+  route_after_plan                   100.0%    5/5   killed  ok
+  route_after_execute                100.0%   11/11  killed  ok
+
+Mutants: 27  killed: 27  survived: 0  not covered: 0  timeouts: 0
+Failure-path gaps: 0
+Mutation score: 100.0%
+Time: baseline 61.0s, total 226.6s
+EXIT 0
+
+====================================================================================================
+== src/sqlpilot/auth.py
+====================================================================================================
+-..........................................TTTTTT................... 68 mutants
+testteeth: mutation grade for all selected code
+
+src/sqlpilot/auth.py
+  <module>                            80.0%    4/5   killed  WEAK
+      L35   swallow-exception `import tomli as tomllib` -> `pass`  [not covered]
+  hash_key                           100.0%    1/1   killed  ok
+  Tenant.public                      100.0%    3/3   killed  ok
+  extract_api_key                    100.0%    5/5   killed  ok
+  TenantRegistry.__post_init__       100.0%    4/4   killed  ok
+  TenantRegistry.from_tenants        100.0%    3/3   killed  ok
+  TenantRegistry.authenticate        100.0%    4/4   killed  ok
+  TenantRegistry.get                 100.0%    1/1   killed  ok
+  TenantRegistry.__len__             100.0%    1/1   killed  ok
+  _tenant_from_mapping               100.0%   31/31  killed  ok
+      ! L133  failure path (timeout): uses a timeout but no test simulates the timeout expiring
+  load_tenants                       100.0%   10/10  killed  ok
+
+Mutants: 68  killed: 67  survived: 0  not covered: 1  timeouts: 6
+Failure-path gaps: 1
+Mutation score: 98.5%
+Time: baseline 11.2s, total 570.6s
+Next: `testteeth suggest` prints an agent-ready brief for each surviving mutant.
+EXIT 0
+

@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from sqlpilot import __version__
 from sqlpilot.agent import SQLAgent
 from sqlpilot.db import ExecutionError, QueryTimeout
 from sqlpilot.guard import GuardRejected
@@ -115,14 +116,15 @@ def build_server(agent: SQLAgent, name: str = "sqlpilot") -> Any:
         Server = importlib.import_module("mcp.server.fastmcp").FastMCP
 
     tools = SQLPilotTools(agent)
-    server = Server(
-        name,
-        instructions=(
-            "Read-only analyst over one SQL database. Start with list_tables/describe_table, then "
-            "run_readonly_sql for precise queries or ask for natural-language questions. Nothing here "
-            "can modify data."
-        ),
+    instructions = (
+        "Read-only analyst over one SQL database. Start with list_tables/describe_table, then "
+        "run_readonly_sql for precise queries or ask for natural-language questions. Nothing here "
+        "can modify data."
     )
+    try:
+        server = Server(name, version=__version__, instructions=instructions)
+    except TypeError:  # mcp 1.x FastMCP has no version argument
+        server = Server(name, instructions=instructions)
     # model_validate accepts the protocol's camelCase names on both mcp 1.x and 2.x.
     hints = {"readOnlyHint": True, "destructiveHint": False, "openWorldHint": False}
     read_only = ToolAnnotations.model_validate({**hints, "idempotentHint": True})

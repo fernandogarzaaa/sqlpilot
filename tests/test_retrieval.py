@@ -271,3 +271,89 @@ def test_real_schema_chinook(chinook: SQLiteDatabase) -> None:
     assert set(retr.retrieve("Which artists have the most albums?").table_names[:2]) == {"Artist", "Album"}
     assert retr.retrieve("List the employees").table_names[0] == "Employee"
     assert retr.retrieve("tracks in each playlist").table_names[0] in {"PlaylistTrack", "Playlist", "Track"}
+
+
+# ---- spec details pinned after the first mutation-testing pass ---------------------------------
+
+
+@pytest.mark.parametrize(("word", "stem"), [("flies", "fly"), ("uses", "use"), ("buses", "bus")])
+def test_stem_length_thresholds(word: str, stem: str) -> None:
+    assert _stem(word) == stem
+
+
+def test_bm25_default_parameters() -> None:
+    bm = BM25([["a", "b"], ["b", "c"]])
+    assert (bm.k1, bm.b) == (1.5, 0.75)
+    idf_a = math.log(1 + 1.5 / 1.5)
+    assert bm.scores(["a"])[0] == pytest.approx(idf_a * 2.5 / (1 + 1.5))
+    assert BM25([]).avg_len == 0.0
+
+
+def test_table_document_tokens() -> None:
+    from sqlpilot.retrieval import _table_document
+
+    table = TableInfo(
+        "concert_hall",
+        (Column("id", "INT", primary_key=True), Column("hallName"), Column("stadium_id", references="stadium.id")),
+    )
+    assert _table_document(table) == (
+        ["concert", "hall"] * 3 + ["id"] + ["hall", "name"] + ["stadium", "id"] + ["stadium"]
+    )
+
+
+def test_retriever_defaults() -> None:
+    retr = SchemaRetriever(SINGERS)
+    assert (retr.k, retr.max_columns, retr.alpha, retr.name_weight, retr.min_relative_score) == (4, 30, 0.5, 0.3, 0.0)
+
+
+def test_empty_schema() -> None:
+    retr = SchemaRetriever([])
+    assert retr.score("anything") == {}
+    result = retr.retrieve("anything")
+    assert result.tables == [] and result.bridges == []
+
+
+def test_small_bm25_scores_are_still_normalised() -> None:
+    # Many documents share the query term, so its idf (and the raw BM25 score) is well below 1.
+    tables = [T(f"t{i}", "shared") for i in range(30)] + [T("alpha", "shared", "rare")]
+    retr = SchemaRetriever(tables, name_weight=0.0)
+    raw_top = max(retr._bm25.scores(tokenize("shared")))
+    assert 0 < raw_top < 1
+    assert max(retr.score("shared").values()) == pytest.approx(1.0)
+
+
+def test_table_name_of_only_stopwords_has_zero_coverage() -> None:
+    tables = [T("all", "x"), T("items", "x")]
+    scores = SchemaRetriever(tables, name_weight=1.0).score("all items")
+    assert scores["all"] == 0.0
+    assert scores["items"] == pytest.approx(1.0)
+
+
+def test_negative_cosine_is_clamped() -> None:
+    tables = [T("singer", "name"), T("stadium", "capacity")]
+    emb = FakeEmbedder({"CREATE TABLE singer": [1.0, 0.0], "CREATE TABLE stadium": [-1.0, 0.0], "who": [1.0, 0.0]})
+    scores = SchemaRetriever(tables, embedder=emb, alpha=1.0).score("who")
+    assert scores == {"singer": pytest.approx(1.0), "stadium": 0.0}
+
+
+def test_not_wide_table_is_returned_unchanged() -> None:
+    table = SINGERS[0]
+    r = SchemaRetriever([table], max_columns=len(table.columns)).retrieve("singer")
+    assert r.tables[0] is table
+
+
+def test_pruning_keeps_keys_wherever_they_are() -> None:
+    cols = [Column(f"metric_{i}", "REAL") for i in range(10)]
+    cols += [
+        Column("revenue", "REAL"),
+        Column("id", "INT", primary_key=True),
+        Column("owner_id", references="owner.id"),
+    ]
+    r = SchemaRetriever([TableInfo("facts", tuple(cols))], max_columns=3).retrieve("revenue")
+    assert [c.name for c in r.tables[0].columns] == ["revenue", "id", "owner_id"]
+
+
+def test_pruning_never_adds_columns_beyond_the_keys_when_keys_fill_the_budget() -> None:
+    cols = (Column("a_id", primary_key=True), Column("b_id", references="b.id"), Column("revenue"), Column("x"))
+    r = SchemaRetriever([TableInfo("facts", cols)], max_columns=1).retrieve("revenue")
+    assert [c.name for c in r.tables[0].columns] == ["a_id", "b_id"]

@@ -1,0 +1,77 @@
+S...................................................S....S.............S..S.....................................SSSS....S.S......................S.S...S.............S.S...S....SS..........S..........................S.SSS................................................................. 285 mutants
+testteeth: mutation grade for all selected code
+
+src/sqlpilot/auth.py
+  <module>                            42.9%    3/7   killed  WEAK
+      L33   comparison        `sys.version_info >= (3, 11)` -> `(sys.version_info > (3, 11))`  [survived]
+      L33   constant          `11` -> `12`  [survived]
+      L48   constant          `256` -> `257`  [survived]
+      L49   constant          `8` -> `9`  [survived]
+  hash_key                           100.0%    1/1   killed  ok
+  Tenant.public                      100.0%    3/3   killed  ok
+  extract_api_key                    100.0%    5/5   killed  ok
+  TenantRegistry.__post_init__       100.0%    4/4   killed  ok
+  TenantRegistry.from_tenants        100.0%    3/3   killed  ok
+  TenantRegistry.authenticate        100.0%    4/4   killed  ok
+  TenantRegistry.get                 100.0%    1/1   killed  ok
+  TenantRegistry.__len__             100.0%    1/1   killed  ok
+  _tenant_from_mapping               100.0%   31/31  killed  ok
+      ! L134  failure path (timeout): uses a timeout but no test simulates the timeout expiring
+  load_tenants                       100.0%   10/10  killed  ok
+src/sqlpilot/guard.py
+  <module>                             0.0%    0/1   killed  WEAK
+      L129  constant          `20_000` -> `20001`  [survived]
+  GuardResult.__bool__               100.0%    1/1   killed  ok
+  GuardRejected.__init__             100.0%    1/1   killed  ok
+  _reject                            100.0%    2/2   killed  ok
+  _function_name                     100.0%    2/2   killed  ok
+  _cte_names                         100.0%    1/1   killed  ok
+  _referenced_tables                 100.0%    6/6   killed  ok
+  SQLGuard.__init__                  100.0%    1/1   killed  ok
+  SQLGuard.check                     100.0%   33/33  killed  ok
+  check_sql                          100.0%    2/2   killed  ok
+src/sqlpilot/retrieval.py
+  _stem                               88.9%   16/18  killed  WEAK
+      L36   constant          `4` -> `5`  [survived]
+      L38   comparison        `len(token) > 4` -> `(len(token) >= 4)`  [survived]
+  tokenize                           100.0%    3/3   killed  ok
+  BM25.__init__                       84.6%   11/13  killed  WEAK
+      L59   constant          `1.5` -> `2.5`  [survived]
+      L64   constant          `0.0` -> `1.0`  [survived]
+  BM25.scores                        100.0%   17/17  killed  ok
+  _cosine                            100.0%    8/8   killed  ok
+  RetrievalResult.table_names        100.0%    1/1   killed  ok
+  RetrievalResult.ddl                100.0%    1/1   killed  ok
+  _table_document                     33.3%    2/6   killed  WEAK
+      L110  constant          `3` -> `4`  [survived]
+      L112  remove-call       `tokens.extend(tokenize(col....` -> `pass`  [survived]
+      L114  remove-call       `tokens.extend(tokenize(col....` -> `pass`  [survived]
+      L114  constant          `0` -> `1`  [survived]
+  _references                        100.0%    2/2   killed  ok
+  SchemaRetriever.__init__            90.0%   18/20  killed  WEAK
+      L135  constant          `4` -> `5`  [survived]
+      L137  constant          `30` -> `31`  [survived]
+  SchemaRetriever._dense_scores      100.0%    6/6   killed  ok
+  SchemaRetriever.score               85.0%   17/20  killed  WEAK
+      L176  constant          `0.0` -> `1.0`  [survived]
+      L179  constant          `0` -> `1`  [survived]
+      L180  constant          `0.0` -> `1.0`  [survived]
+  SchemaRetriever._prune_columns      70.0%    7/10  killed  WEAK
+      L190  comparison        `len(table.columns) <= self....` -> `(len(table.columns) < self....`  [survived]
+      L192  boolean           `c.primary_key or c.references` -> `(c.primary_key and c.refere...`  [survived]
+      L195  constant          `0` -> `1`  [survived]
+  SchemaRetriever.retrieve            84.6%   11/13  killed  WEAK
+      L202  constant          `0.0` -> `1.0`  [survived]
+      L203  comparison        `best <= 0` -> `(best < 0)`  [survived]
+src/sqlpilot/routing.py
+  <module>                             0.0%    0/1   killed  WEAK
+      L24   constant          `2000` -> `2001`  [survived]
+  classify_intent                    100.0%   10/10  killed  ok
+  route_after_plan                   100.0%    5/5   killed  ok
+  route_after_execute                100.0%   11/11  killed  ok
+
+Mutants: 285  killed: 261  survived: 24  not covered: 0  timeouts: 0
+Failure-path gaps: 1
+Mutation score: 91.6%
+Time: baseline 57.1s, total 1943.7s
+Next: `testteeth suggest` prints an agent-ready brief for each surviving mutant.

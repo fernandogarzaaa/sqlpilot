@@ -1,0 +1,43 @@
+{
+  "model": "qwen2.5-0.5b-instruct-q4_k_m",
+  "n": 150,
+  "seed": 42,
+  "configs": {
+    "zero_shot": {
+      "questions": 150,
+      "ex_pct": 26.7,
+      "correct": 40,
+      "exec_error_pct": 44.0,
+      "latency_mean_s": 3.84,
+      "latency_p50_s": 2.61,
+      "latency_p95_s": 10.68,
+      "prompt_tokens_mean": 298.8,
+      "completion_tokens_mean": 56.4,
+      "llm_calls_mean": 0.99
+    },
+    "retrieval": {
+      "questions": 150,
+      "ex_pct": 39.3,
+      "correct": 59,
+      "exec_error_pct": 32.0,
+      "latency_mean_s": 9.15,
+      "latency_p50_s": 7.43,
+      "latency_p95_s": 21.09,
+      "prompt_tokens_mean": 265.5,
+      "completion_tokens_mean": 47.6,
+      "llm_calls_mean": 0.99
+    },
+    "retrieval_fix": {
+      "questions": 126,
+      "ex_pct": 40.5,
+      "correct": 51,
+      "exec_error_pct": 27.0,
+      "latency_mean_s": 15.13,
+      "latency_p50_s": 8.12,
+      "latency_p95_s": 44.65,
+      "prompt_tokens_mean": 470.3,
+      "completion_tokens_mean": 82.6,
+      "llm_calls_mean": 1.56
+    }
+  }
+}
