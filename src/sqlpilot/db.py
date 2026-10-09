@@ -165,6 +165,12 @@ def _sqlite_authorizer(action: int, arg1: str | None, arg2: str | None, db: str 
     return sqlite3.SQLITE_OK
 
 
+def _sqlite_allow_all(action: int, arg1: str | None, arg2: str | None, db: str | None, src: str | None) -> int:
+    # ``set_authorizer(None)`` only clears the authorizer on Python 3.11+; on 3.10 the old
+    # callback stays installed, so reset to an explicit allow-all callback instead.
+    return sqlite3.SQLITE_OK
+
+
 class SQLiteDatabase:
     """A SQLite file opened read-only. One connection per thread (sqlite3 objects are per-thread)."""
 
@@ -258,7 +264,7 @@ class SQLiteDatabase:
             raise ExecutionError(str(err)) from err
         finally:
             conn.set_progress_handler(None, 0)
-            conn.set_authorizer(None)
+            conn.set_authorizer(_sqlite_allow_all)
         elapsed = (time.perf_counter() - start) * 1000
         truncated = len(rows) > max_rows
         cleaned = [[_clean_cell(v) for v in row] for row in rows[:max_rows]]
