@@ -1,0 +1,16 @@
+# Tenants for docker-compose. Keys come from the environment (see docker-compose.yml).
+
+[[tenants]]
+id = "chinook-pg"
+name = "Chinook on Postgres"
+database = "postgresql://sqlpilot_reader:reader@postgres:5432/chinook"
+api_key_env = "CHINOOK_PG_API_KEY"
+max_rows = 200
+timeout_s = 10
+
+[[tenants]]
+id = "chinook-sqlite"
+name = "Chinook on SQLite (bundled)"
+database = "/usr/local/lib/python3.12/site-packages/sqlpilot/data/chinook.sqlite"
+api_key_env = "CHINOOK_SQLITE_API_KEY"
+allowed_tables = ["artist", "album", "track", "genre", "mediatype", "playlist", "playlisttrack"]

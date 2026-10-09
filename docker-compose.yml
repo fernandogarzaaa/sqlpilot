@@ -1,0 +1,42 @@
+# Postgres (memory store + seeded Chinook demo DB) + the sqlpilot API.
+#   docker compose up --build        -> http://localhost:8000  (API key: demo-pg-key-123)
+# LLM: mock by default; point SQLPILOT_LLM_BASE_URL at llama.cpp / vLLM / OpenAI for real answers.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sqlpilot
+      POSTGRES_PASSWORD: sqlpilot
+      POSTGRES_DB: sqlpilot
+      SQLPILOT_READER_PASSWORD: reader
+    volumes:
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sqlpilot -d chinook"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      SQLPILOT_TENANTS_FILE: /config/tenants.toml
+      SQLPILOT_MEMORY_URL: postgresql://sqlpilot:sqlpilot@postgres:5432/sqlpilot
+      SQLPILOT_LLM: ${SQLPILOT_LLM:-mock}
+      SQLPILOT_LLM_BASE_URL: ${SQLPILOT_LLM_BASE_URL:-http://host.docker.internal:8080/v1}
+      SQLPILOT_LLM_MODEL: ${SQLPILOT_LLM_MODEL:-local}
+      CHINOOK_PG_API_KEY: ${CHINOOK_PG_API_KEY:-demo-pg-key-123}
+      CHINOOK_SQLITE_API_KEY: ${CHINOOK_SQLITE_API_KEY:-demo-sqlite-key-123}
+    volumes:
+      - ./docker/tenants.compose.toml:/config/tenants.toml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  pgdata:

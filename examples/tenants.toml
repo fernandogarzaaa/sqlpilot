@@ -1,0 +1,20 @@
+# Example tenants file: `sqlpilot serve --tenants examples/tenants.toml`
+# Each tenant gets its own database, API keys (SHA-256 only, `sqlpilot hash-key <key>`),
+# optional table allow-list and limits.
+
+[[tenants]]
+id = "music-store"
+name = "Music store (Chinook sample)"
+database = "chinook.sqlite"            # create it with: sqlpilot demo-db chinook.sqlite
+api_key_env = "MUSIC_STORE_API_KEY"    # export MUSIC_STORE_API_KEY=... before starting
+max_rows = 200
+timeout_s = 10
+
+[[tenants]]
+id = "catalog-only"
+name = "Catalog team (no customer or invoice data)"
+database = "chinook.sqlite"
+# sha256("catalog-team-key-123")
+api_key_sha256 = ["b2fa8c4e567a130ba8aebc7ce3923dcb501da579813f68e3b917ebfe50022b24"]
+allowed_tables = ["artist", "album", "track", "genre", "mediatype"]
+max_rows = 100

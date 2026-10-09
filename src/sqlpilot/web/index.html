@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sqlpilot</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --text:#e6e8ee; --muted:#9aa3b2; --accent:#5b9dff; --ok:#3ecf8e; --bad:#ff6b6b; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--text); }
+  header { display:flex; gap:12px; align-items:center; padding:12px 20px; border-bottom:1px solid var(--line); }
+  header h1 { font-size:16px; margin:0; }
+  header .who { color:var(--muted); margin-left:auto; }
+  input, textarea, button { font:inherit; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+  button { background:var(--accent); border-color:var(--accent); color:#fff; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  main { display:grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 57px); }
+  aside { border-right:1px solid var(--line); padding:14px; overflow:auto; }
+  aside h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 8px; }
+  aside li { list-style:none; padding:3px 0; cursor:pointer; color:var(--muted); }
+  aside li:hover { color:var(--text); }
+  aside ul { padding:0; margin:0; }
+  section { padding:16px 20px; overflow:auto; }
+  .ask { display:flex; gap:8px; }
+  .ask input { flex:1; }
+  .turn { border:1px solid var(--line); background:var(--panel); border-radius:10px; padding:12px 14px; margin-top:14px; }
+  .q { font-weight:600; }
+  .steps { margin:8px 0; padding:0; display:flex; flex-wrap:wrap; gap:6px; }
+  .steps li { list-style:none; font-size:12px; border:1px solid var(--line); border-radius:999px; padding:2px 9px; color:var(--muted); }
+  .steps li.bad { color:var(--bad); border-color:var(--bad); }
+  pre { background:#0b0d11; border:1px solid var(--line); border-radius:8px; padding:10px; overflow:auto; margin:8px 0; white-space:pre-wrap; }
+  .answer { margin:8px 0; }
+  .err { color:var(--bad); }
+  .meta { color:var(--muted); font-size:12px; }
+  table { border-collapse:collapse; margin-top:8px; font-size:13px; display:block; max-height:340px; overflow:auto; }
+  th, td { border:1px solid var(--line); padding:4px 8px; text-align:left; white-space:nowrap; }
+  th { background:#1d212a; position:sticky; top:0; }
+  .key { width:230px; }
+  @media (max-width: 760px) { main { grid-template-columns: 1fr; } aside { display:none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>sqlpilot</h1>
+  <input id="key" class="key" type="password" placeholder="API key" autocomplete="off" aria-label="API key">
+  <button id="connect">Connect</button>
+  <span class="who" id="who">not connected</span>
+</header>
+<main>
+  <aside>
+    <h2>Tables</h2>
+    <ul id="tables"></ul>
+  </aside>
+  <section>
+    <form class="ask" id="form">
+      <input id="question" placeholder="Ask about your data, e.g. Which 5 artists have the most albums?" autocomplete="off" aria-label="Question">
+      <button id="send" type="submit" disabled>Ask</button>
+    </form>
+    <div class="meta" id="session"></div>
+    <div id="log"></div>
+  </section>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+let apiKey = localStorage.getItem("sqlpilot_key") || "";
+let sessionId = null;
+$("key").value = apiKey;
+
+function el(tag, attrs = {}, text) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (text !== undefined) node.textContent = String(text);   // never innerHTML: results come from the DB
+  return node;
+}
+function headers() { return { "X-API-Key": apiKey, "Content-Type": "application/json" }; }
+
+async function connect() {
+  apiKey = $("key").value.trim();
+  localStorage.setItem("sqlpilot_key", apiKey);
+  const me = await fetch("/v1/me", { headers: headers() });
+  if (!me.ok) { $("who").textContent = "invalid API key"; $("send").disabled = true; return; }
+  const info = await me.json();
+  $("who").textContent = `${info.name} · ${info.dialect} · model ${info.model}`;
+  $("send").disabled = false;
+  const res = await (await fetch("/v1/tables", { headers: headers() })).json();
+  const list = $("tables"); list.replaceChildren();
+  for (const t of res.tables) {
+    const li = el("li", { title: "click to preview" }, `${t.name} (${t.row_count ?? "?"})`);
+    li.onclick = () => runSql(`SELECT * FROM "${t.name.replace(/"/g, '""')}" LIMIT 20`);
+    list.appendChild(li);
+  }
+}
+
+function renderTable(result) {
+  const table = el("table");
+  const head = el("tr");
+  for (const c of result.columns) head.appendChild(el("th", {}, c));
+  table.appendChild(head);
+  for (const row of result.rows) {
+    const tr = el("tr");
+    for (const v of row) tr.appendChild(el("td", {}, v === null ? "NULL" : v));
+    table.appendChild(tr);
+  }
+  return table;
+}
+
+async function runSql(sql) {
+  const turn = el("div", { class: "turn" });
+  turn.appendChild(el("div", { class: "q" }, "SQL preview"));
+  turn.appendChild(el("pre", {}, sql));
+  $("log").prepend(turn);
+  const resp = await fetch("/v1/sql", { method: "POST", headers: headers(), body: JSON.stringify({ sql }) });
+  const data = await resp.json();
+  if (!resp.ok) { turn.appendChild(el("div", { class: "err" }, data.detail || "error")); return; }
+  turn.appendChild(el("div", { class: "meta" }, `${data.row_count} rows${data.truncated ? " (truncated)" : ""} · ${data.elapsed_ms} ms`));
+  turn.appendChild(renderTable(data));
+}
+
+async function ask(question) {
+  const turn = el("div", { class: "turn" });
+  turn.appendChild(el("div", { class: "q" }, question));
+  const steps = el("ul", { class: "steps" });
+  turn.appendChild(steps);
+  $("log").prepend(turn);
+  $("send").disabled = true;
+  const resp = await fetch("/v1/ask/stream", { method: "POST", headers: headers(),
+    body: JSON.stringify({ question, session_id: sessionId }) });
+  if (!resp.ok) { turn.appendChild(el("div", { class: "err" }, `HTTP ${resp.status}`)); $("send").disabled = false; return; }
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buffer.indexOf("\n\n")) >= 0) {
+      const chunk = buffer.slice(0, idx); buffer = buffer.slice(idx + 2);
+      const event = (chunk.match(/^event: (.*)$/m) || [])[1];
+      const data = JSON.parse((chunk.match(/^data: (.*)$/m) || [])[1] || "{}");
+      handle(event, data, turn, steps);
+    }
+  }
+  $("send").disabled = false;
+}
+
+function handle(event, data, turn, steps) {
+  if (event === "session") { sessionId = data.session_id; $("session").textContent = `session ${sessionId}`; }
+  if (event === "step") {
+    let label = data.node;
+    if (data.node === "retrieve" && data.tables) label += `: ${data.tables.join(", ")}`;
+    if (data.node === "execute") label += data.error ? " ✗" : ` ✓ ${data.row_count} rows`;
+    if (data.node === "correct") label += ` (attempt ${data.attempts})`;
+    steps.appendChild(el("li", data.error ? { class: "bad", title: data.error } : {}, label));
+  }
+  if (event === "result") {
+    turn.appendChild(el("div", { class: data.ok ? "answer" : "answer err" }, data.answer));
+    if (data.sql) turn.appendChild(el("pre", {}, data.sql));
+    if (data.result) turn.appendChild(renderTable(data.result));
+    turn.appendChild(el("div", { class: "meta" },
+      `${data.latency_ms} ms · ${data.llm_calls} LLM calls · ${data.prompt_tokens}+${data.completion_tokens} tokens · ${data.attempts} attempt(s)`));
+  }
+  if (event === "error") turn.appendChild(el("div", { class: "err" }, data.detail));
+}
+
+$("connect").onclick = connect;
+$("form").onsubmit = (e) => { e.preventDefault(); const q = $("question").value.trim(); if (q) { ask(q); $("question").value = ""; } };
+if (apiKey) connect();
+</script>
+</body>
+</html>
