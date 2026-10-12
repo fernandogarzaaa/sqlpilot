@@ -18,7 +18,8 @@
   aside { border-right:1px solid var(--line); padding:14px; overflow:auto; }
   aside h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 8px; }
   aside li { list-style:none; padding:3px 0; cursor:pointer; color:var(--muted); }
-  aside li:hover { color:var(--text); }
+  aside li:hover, aside li:focus { color:var(--text); }
+  aside li.empty { cursor:default; }
   aside ul { padding:0; margin:0; }
   section { padding:16px 20px; overflow:auto; }
   .ask { display:flex; gap:8px; }
@@ -57,7 +58,7 @@
       <button id="send" type="submit" disabled>Ask</button>
     </form>
     <div class="meta" id="session"></div>
-    <div id="log"></div>
+    <div id="log" aria-live="polite"></div>
   </section>
 </main>
 <script>
@@ -75,20 +76,45 @@ function el(tag, attrs = {}, text) {
 }
 function headers() { return { "X-API-Key": apiKey, "Content-Type": "application/json" }; }
 
+// FastAPI errors carry `detail` as a string or (422) a list of {msg, loc}.
+function errText(data, status) {
+  const d = data && data.detail;
+  if (typeof d === "string") return d;
+  if (Array.isArray(d)) return d.map((e) => e.msg || JSON.stringify(e)).join("; ");
+  return `HTTP ${status}`;
+}
+async function readJson(resp) {
+  try { return await resp.json(); } catch { return {}; }
+}
+
 async function connect() {
   apiKey = $("key").value.trim();
   localStorage.setItem("sqlpilot_key", apiKey);
-  const me = await fetch("/v1/me", { headers: headers() });
-  if (!me.ok) { $("who").textContent = "invalid API key"; $("send").disabled = true; return; }
-  const info = await me.json();
-  $("who").textContent = `${info.name} · ${info.dialect} · model ${info.model}`;
-  $("send").disabled = false;
-  const res = await (await fetch("/v1/tables", { headers: headers() })).json();
-  const list = $("tables"); list.replaceChildren();
-  for (const t of res.tables) {
-    const li = el("li", { title: "click to preview" }, `${t.name} (${t.row_count ?? "?"})`);
-    li.onclick = () => runSql(`SELECT * FROM "${t.name.replace(/"/g, '""')}" LIMIT 20`);
-    list.appendChild(li);
+  const list = $("tables");
+  $("who").textContent = "connecting…";
+  try {
+    const me = await fetch("/v1/me", { headers: headers() });
+    if (!me.ok) {
+      $("who").textContent = me.status === 401 || me.status === 403 ? "invalid API key" : `connect failed (HTTP ${me.status})`;
+      $("send").disabled = true; list.replaceChildren(); return;
+    }
+    const info = await me.json();
+    $("who").textContent = `${info.name} · ${info.dialect} · model ${info.model}`;
+    $("send").disabled = false;
+    const tr = await fetch("/v1/tables", { headers: headers() });
+    const res = await readJson(tr);
+    list.replaceChildren();
+    if (!tr.ok) { list.appendChild(el("li", { class: "empty" }, `tables unavailable: ${errText(res, tr.status)}`)); return; }
+    if (!res.tables || !res.tables.length) { list.appendChild(el("li", { class: "empty" }, "no tables visible")); return; }
+    for (const t of res.tables) {
+      const li = el("li", { title: "preview 20 rows", tabindex: "0", role: "button" }, `${t.name} (${t.row_count ?? "?"})`);
+      const preview = () => runSql(`SELECT * FROM "${t.name.replace(/"/g, '""')}" LIMIT 20`);
+      li.onclick = preview;
+      li.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); preview(); } };
+      list.appendChild(li);
+    }
+  } catch (e) {
+    $("who").textContent = "server unreachable"; $("send").disabled = true;
   }
 }
 
@@ -110,9 +136,12 @@ async function runSql(sql) {
   turn.appendChild(el("div", { class: "q" }, "SQL preview"));
   turn.appendChild(el("pre", {}, sql));
   $("log").prepend(turn);
-  const resp = await fetch("/v1/sql", { method: "POST", headers: headers(), body: JSON.stringify({ sql }) });
-  const data = await resp.json();
-  if (!resp.ok) { turn.appendChild(el("div", { class: "err" }, data.detail || "error")); return; }
+  let resp, data;
+  try {
+    resp = await fetch("/v1/sql", { method: "POST", headers: headers(), body: JSON.stringify({ sql }) });
+    data = await readJson(resp);
+  } catch (e) { turn.appendChild(el("div", { class: "err" }, "server unreachable")); return; }
+  if (!resp.ok) { turn.appendChild(el("div", { class: "err" }, errText(data, resp.status))); return; }
   turn.appendChild(el("div", { class: "meta" }, `${data.row_count} rows${data.truncated ? " (truncated)" : ""} · ${data.elapsed_ms} ms`));
   turn.appendChild(renderTable(data));
 }
@@ -124,25 +153,34 @@ async function ask(question) {
   turn.appendChild(steps);
   $("log").prepend(turn);
   $("send").disabled = true;
-  const resp = await fetch("/v1/ask/stream", { method: "POST", headers: headers(),
-    body: JSON.stringify({ question, session_id: sessionId }) });
-  if (!resp.ok) { turn.appendChild(el("div", { class: "err" }, `HTTP ${resp.status}`)); $("send").disabled = false; return; }
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let idx;
-    while ((idx = buffer.indexOf("\n\n")) >= 0) {
-      const chunk = buffer.slice(0, idx); buffer = buffer.slice(idx + 2);
-      const event = (chunk.match(/^event: (.*)$/m) || [])[1];
-      const data = JSON.parse((chunk.match(/^data: (.*)$/m) || [])[1] || "{}");
-      handle(event, data, turn, steps);
+  const pending = el("div", { class: "meta" }, "thinking…");
+  turn.appendChild(pending);
+  try {
+    const resp = await fetch("/v1/ask/stream", { method: "POST", headers: headers(),
+      body: JSON.stringify({ question, session_id: sessionId }) });
+    if (!resp.ok) { turn.appendChild(el("div", { class: "err" }, errText(await readJson(resp), resp.status))); return; }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let idx;
+      while ((idx = buffer.indexOf("\n\n")) >= 0) {
+        const chunk = buffer.slice(0, idx); buffer = buffer.slice(idx + 2);
+        const event = (chunk.match(/^event: (.*)$/m) || [])[1];
+        let data = {};
+        try { data = JSON.parse((chunk.match(/^data: (.*)$/m) || [])[1] || "{}"); } catch { continue; }
+        handle(event, data, turn, steps);
+      }
     }
+  } catch (e) {
+    turn.appendChild(el("div", { class: "err" }, "connection lost before the answer arrived"));
+  } finally {
+    pending.remove();
+    $("send").disabled = false;
   }
-  $("send").disabled = false;
 }
 
 function handle(event, data, turn, steps) {

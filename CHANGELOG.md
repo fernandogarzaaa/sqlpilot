@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Fixed
+- Web UI: a network error or dropped stream no longer leaves the Ask button disabled for good;
+  connect/preview/ask show a readable error (including FastAPI 422 detail lists) instead of
+  failing silently, a "thinking…" indicator shows while a question runs, empty or unavailable
+  table lists say so, table names are keyboard-operable, and the result log is an aria-live region.
 - Schema retrieval: hybrid (BM25 + embeddings) scores are clamped to [0, 1] when cosine
   similarity is negative; empty-schema handling is simplified to one early return.
 - MCP server passes its version to FastMCP on mcp 2.x and falls back cleanly on mcp 1.x.
