@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sqlpilot"
-version = "0.1.0"
+version = "0.1.1"
 description = "A multi-agent text-to-SQL analyst (LangGraph): schema retrieval, a read-only SQL guard, self-correction, memory, and a multi-tenant FastAPI + SSE service, MCP server and web UI."
 readme = "README.md"
 license = "MIT"
