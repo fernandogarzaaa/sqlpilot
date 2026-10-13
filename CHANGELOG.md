@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-13
+
 ### Security
 - SQL guard: a CTE named like a real table no longer hides that table from the per-tenant
   allow-list or the system deny-list. CTE references are now resolved by scope (inner-scope
