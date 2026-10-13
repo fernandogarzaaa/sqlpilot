@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Security
+- SQL guard: a CTE named like a real table no longer hides that table from the per-tenant
+  allow-list or the system deny-list. CTE references are now resolved by scope (inner-scope
+  CTEs, CTEs defined later in the same `WITH`, a non-recursive CTE reading a table of its own
+  name, and schema-qualified names all count as real tables), so e.g.
+  `SELECT * FROM secrets, (WITH secrets AS (SELECT 1) SELECT * FROM secrets) t` is rejected
+  for a tenant that may only read `customers`.
+
 ### Fixed
 - Web UI: a network error or dropped stream no longer leaves the Ask button disabled for good;
   connect/preview/ask show a readable error (including FastAPI 422 detail lists) instead of

@@ -23,6 +23,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import Any
 
 import sqlglot
 from sqlglot import exp
@@ -165,16 +166,53 @@ def _function_name(node: exp.Func) -> str:
     return str(node.sql_name()).lower()
 
 
-def _cte_names(tree: exp.Expression) -> set[str]:
-    return {str(cte.alias_or_name).lower() for cte in tree.find_all(exp.CTE)}
+def _with_clause(node: Any) -> exp.With | None:
+    # sqlglot renamed the arg from "with" to "with_" in newer releases.
+    w = node.args.get("with_") or node.args.get("with")
+    return w if isinstance(w, exp.With) else None
+
+
+def _is_cte_reference(table: exp.Table) -> bool:
+    """True only if ``table`` resolves to a CTE that is in scope where it appears.
+
+    The old check skipped every table whose name matched *any* CTE anywhere in the
+    statement, so a CTE defined in an inner scope (or a CTE that reads a real table of
+    its own name, which Postgres resolves to the real table) hid a real table from the
+    allow-list and deny-list, e.g.
+    ``SELECT * FROM salaries, (WITH salaries AS (SELECT 1) SELECT * FROM salaries) t``.
+    Resolution is conservative: when in doubt the name is treated as a real table.
+    """
+    if table.args.get("db") or table.args.get("catalog"):
+        return False  # schema-qualified names never refer to a CTE
+    name = str(table.name).lower()
+    cur: Any = table  # parent nodes are typed exp.Expr on sqlglot>=30
+    while cur.parent is not None:
+        parent = cur.parent
+        if isinstance(parent, exp.With):
+            # ``cur`` is one CTE of this WITH: it sees the CTEs defined before it, and
+            # itself only when the WITH is RECURSIVE. The owner's WITH is then done.
+            ctes = list(parent.expressions)
+            idx = next((i for i, c in enumerate(ctes) if c is cur), len(ctes))
+            visible = ctes[:idx] + ([cur] if parent.args.get("recursive") and idx < len(ctes) else [])
+            if name in {str(c.alias_or_name).lower() for c in visible}:
+                return True
+            owner = parent.parent
+            if owner is None:
+                return False
+            cur = owner
+            continue
+        with_ = _with_clause(parent)
+        if with_ is not None and cur is not with_ and name in {str(c.alias_or_name).lower() for c in with_.expressions}:
+            return True
+        cur = parent
+    return False
 
 
 def _referenced_tables(tree: exp.Expression) -> list[str]:
-    ctes = _cte_names(tree)
     names: list[str] = []
     for table in tree.find_all(exp.Table):
         name = str(table.name).lower()
-        if not name or name in ctes or name in names:
+        if not name or name in names or _is_cte_reference(table):
             continue
         names.append(name)
     return names

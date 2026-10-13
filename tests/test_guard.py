@@ -273,6 +273,49 @@ def test_cte_names_do_not_count_as_tables() -> None:
     assert result.ok
 
 
+@pytest.mark.parametrize("dialect", ["sqlite", "postgres"])
+@pytest.mark.parametrize(
+    "sql",
+    [
+        # an inner-scope CTE named like a real table used to hide the outer real table
+        "SELECT * FROM secrets, (WITH secrets AS (SELECT 1 AS x) SELECT x FROM secrets) t",
+        "SELECT * FROM secrets WHERE 1 IN (WITH secrets AS (SELECT 1) SELECT * FROM secrets)",
+        # non-recursive CTE reading a real table of its own name (Postgres reads the table)
+        "WITH secrets AS (SELECT * FROM secrets) SELECT * FROM secrets",
+        # a CTE is not visible to CTEs defined before it
+        "WITH b AS (SELECT * FROM secrets), secrets AS (SELECT 1) SELECT * FROM b",
+        # a schema-qualified name never refers to a CTE
+        "WITH secrets AS (SELECT 1) SELECT * FROM main.secrets",
+    ],
+)
+def test_cte_shadowing_cannot_bypass_allow_list(sql: str, dialect: str) -> None:
+    result = check_sql(sql, dialect=dialect, allowed_tables=["customers"])
+    assert not result.ok
+    assert result.reason == "table_not_allowed"
+    assert "secrets" in result.message
+
+
+def test_cte_shadowing_cannot_bypass_deny_list() -> None:
+    sql = "WITH pg_authid AS (SELECT * FROM pg_authid) SELECT * FROM pg_authid"
+    assert check_sql(sql, dialect="postgres").reason == "forbidden_table"
+
+
+@pytest.mark.parametrize("dialect", ["sqlite", "postgres"])
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "WITH a AS (SELECT * FROM customers), b AS (SELECT * FROM a) SELECT * FROM b JOIN a ON 1 = 1",
+        "WITH RECURSIVE r(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM r WHERE n < 5) SELECT * FROM r",
+        "SELECT * FROM (WITH a AS (SELECT * FROM customers) SELECT * FROM a) t",
+        "WITH a AS (SELECT id FROM customers) SELECT * FROM customers WHERE id IN (SELECT id FROM a)",
+    ],
+)
+def test_scoped_cte_references_still_allowed(sql: str, dialect: str) -> None:
+    result = check_sql(sql, dialect=dialect, allowed_tables=["customers"])
+    assert result.ok, result.message
+    assert set(result.tables) <= {"customers"}
+
+
 def test_empty_allow_list_blocks_every_table() -> None:
     assert check_sql("SELECT * FROM customers", allowed_tables=[]).reason == "table_not_allowed"
     assert check_sql("SELECT 1", allowed_tables=[]).ok
